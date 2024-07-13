@@ -553,11 +553,11 @@ section .container {
 .imageIcons {
   width: 32px;
   height: 32px;
-  margin-right: 8px;
 }
 
 .intheight {
   min-height: 72px;
+  gap: 16px;
 }
 
 .education {
@@ -577,4 +577,9 @@ section .container {
 
 .alignment{
   align-items: center;
+}
+
+.meowimg{
+  width: 55px;
+  height: 55px;
 }
