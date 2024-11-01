@@ -1,88 +1,80 @@
-(function ($) {
-  "use strict";
+document.addEventListener("DOMContentLoaded", () => {
+  const selectAll = (selector) => Array.from(document.querySelectorAll(selector));
+  const select = (selector) => document.querySelector(selector);
 
-  function updateActiveNav(element) {
-    $(".nav-menu .active, .mobile-nav .active").removeClass("active");
-    element.closest("li").addClass("active");
-  }
+  const setActiveNav = (element) => {
+    selectAll(".nav-menu .active, .mobile-nav .active").forEach((el) => el.classList.remove("active"));
+    element.closest("li").classList.add("active");
+  };
 
-  function updateSectionShow(hash) {
-    $("section").removeClass("section-show");
-    $(hash).addClass("section-show");
-  }
+  const showSection = (hash) => {
+    selectAll("section").forEach((section) => section.classList.remove("section-show"));
+    select(hash)?.classList.add("section-show");
+  };
 
-  function toggleMobileNavActive() {
-    $("body").toggleClass("mobile-nav-active");
-    $(".mobile-nav-toggle i").toggleClass(
-      "icofont-navigation-menu icofont-close"
-    );
-    $(".mobile-nav-overly").toggle();
-  }
+  const toggleMobileNav = () => {
+    document.body.classList.toggle("mobile-nav-active");
+    const icon = select(".mobile-nav-toggle i");
+    icon.classList.toggle("icofont-navigation-menu");
+    icon.classList.toggle("icofont-close");
 
-  $(document).on("click", ".nav-menu a, .mobile-nav a", function (e) {
-    if (
-      location.pathname.replace(/^\//, "") ===
-        this.pathname.replace(/^\//, "") &&
-      location.hostname === this.hostname
-    ) {
-      const hash = this.hash;
-      const target = $(hash);
+    const overlay = select(".mobile-nav-overly");
+    overlay.style.display = overlay.style.display === "block" ? "none" : "block";
+  };
 
-      if (target.length) {
-        e.preventDefault();
-        if ($(this).parents(".nav-menu, .mobile-nav").length)
-          updateActiveNav($(this));
+  const handleAnchorClick = (e) => {
+    if (location.pathname.replace(/^\//, "") !== e.currentTarget.pathname.replace(/^\//, "") ||
+      location.hostname !== e.currentTarget.hostname) return;
 
-        if (hash === "#header") {
-          $("#header").removeClass("header-top");
-          updateSectionShow(hash);
-          return;
-        }
+    const hash = e.currentTarget.hash;
+    const target = select(hash);
+    if (!target) return;
 
-        if (!$("#header").hasClass("header-top")) {
-          $("#header").addClass("header-top");
-          setTimeout(() => updateSectionShow(hash), 350);
-        } else {
-          updateSectionShow(hash);
-        }
+    e.preventDefault();
+    if (e.currentTarget.closest(".nav-menu, .mobile-nav")) setActiveNav(e.currentTarget);
 
-        if ($("body").hasClass("mobile-nav-active")) {
-          $("body").removeClass("mobile-nav-active");
-          $(".mobile-nav-toggle i").toggleClass(
-            "icofont-navigation-menu icofont-close"
-          );
-          $(".mobile-nav-overly").fadeOut();
-        }
+    const header = select("#header");
+    hash === "#header"
+      ? (header.classList.remove("header-top"), showSection(hash))
+      : !header.classList.contains("header-top")
+        ? (header.classList.add("header-top"), setTimeout(() => showSection(hash), 350))
+        : showSection(hash);
 
-        return false;
-      }
-    }
-  });
+    document.body.classList.contains("mobile-nav-active") && toggleMobileNav();
+  };
 
-  if ($(".nav-menu").length) {
-    const $mobile_nav = $(".nav-menu").clone().prop({
-      class: "mobile-nav d-lg-none",
+  const initializeMobileNav = () => {
+    const navMenu = select(".nav-menu");
+    if (!navMenu) return;
+
+    const mobileNav = navMenu.cloneNode(true);
+    mobileNav.className = "mobile-nav d-lg-none";
+    document.body.append(mobileNav);
+
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.className = "mobile-nav-toggle d-lg-none";
+    toggleButton.innerHTML = '<i class="icofont-navigation-menu"></i>';
+    document.body.append(toggleButton);
+
+    const overlay = document.createElement("div");
+    overlay.className = "mobile-nav-overly";
+    document.body.append(overlay);
+
+    toggleButton.addEventListener("click", toggleMobileNav);
+
+    document.addEventListener("click", (e) => {
+      const container = select(".mobile-nav, .mobile-nav-toggle");
+      !container.contains(e.target) && document.body.classList.contains("mobile-nav-active") && toggleMobileNav();
     });
-    $("body").append(
-      $mobile_nav,
-      '<button type="button" class="mobile-nav-toggle d-lg-none"><i class="icofont-navigation-menu"></i></button>',
-      '<div class="mobile-nav-overly"></div>'
-    );
+  };
 
-    $(document)
-      .on("click", ".mobile-nav-toggle", toggleMobileNavActive)
-      .click(function (e) {
-        const container = $(".mobile-nav, .mobile-nav-toggle");
-        if (
-          !container.is(e.target) &&
-          container.has(e.target).length === 0 &&
-          $("body").hasClass("mobile-nav-active")
-        ) {
-          toggleMobileNavActive();
-          $(".mobile-nav-overly").fadeOut();
-        }
-      });
-  } else if ($(".mobile-nav, .mobile-nav-toggle").length) {
-    $(".mobile-nav, .mobile-nav-toggle").hide();
-  }
-})(jQuery);
+  const hideMobileNavIfAbsent = () => {
+    !select(".nav-menu") && select(".mobile-nav, .mobile-nav-toggle")?.style.setProperty("display", "none");
+  };
+
+  selectAll(".nav-menu a, .mobile-nav a").forEach((anchor) => anchor.addEventListener("click", handleAnchorClick));
+
+  initializeMobileNav();
+  hideMobileNavIfAbsent();
+});
